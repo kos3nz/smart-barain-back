@@ -1,0 +1,122 @@
+# everytime I change the yml file I need to run:
+# 'docker-composer build' to re-read that file
+
+version: '3.9'
+
+services:
+  # Backend API
+  smart-brain-api:
+    container_name: backend
+    # image: node:12
+    build: ./
+    command: npm start
+    working_dir: /usr/src/smart-brain-api
+    environment:
+      POSTGRES_URI: postgres://sally:secret@postgres:5432/smart-brain-docker
+    ports:
+      - '8080:8080'
+    volumes:
+      - ./:/usr/src/smart-brain-api
+
+  # Postgres
+  postgres:
+    # container_name: postgres ← imageと同じなので記載の必要なし
+    build: ./postgres
+    ports:
+      - '5431:5432'
+    environment:
+      POSTGRES_USER: sally
+      POSTGRES_PASSWORD: secret
+      POSTGRES_DB: smart-brain-docker
+      POSTGRES_HOST: postgres
+  #                      ↑ envファイルに外出ししても良い
+  # passwordを記載しない場合
+  # POSTGRES_HOST_AUTH_METHOD=trust
+#================================================#
+
+# If I were logging in through my terminal, use commands below
+# psql postgres://sally:secret@localhost:5431/smart-brain-docker
+# pg postgres://sally:secret@localhost:5431/smart-brain-docker
+# ↑ ...postgres(dockerのhost):5431... になっていないか確かめる
+# pg -p 5431 -U sally smart-brain-docker → enter password
+
+# I run the following Command:
+
+# It also does not work from PSequel :(
+
+# psql postgres://john:secret@localhost:5432/smart-brain-docker
+
+# psql: FATAL: role "john" does not exist
+
+# version: '3.7'
+# services:
+#   # Backend API
+#   smart-brain-api:
+#     container_name: backend
+#     build: ./
+#     command: npm start
+#     working_dir: /usr/src/smart-brain-api
+#     environment:
+#       POSTGRES_USER: john
+#       POSTGRES_PASSWORD: secret
+#       POSTGRES_DB: smart-brain-docker
+#       POSTGRES_HOST: postgres
+#     ports:
+#       - "8080:8080"
+#     volumes:
+#       - ./:/usr/src/smart-brain-api
+#       - /usr/src/smart-brain-api/node_modules/
+
+#   # Postgres
+#   postgres:
+#     container_name: postgres
+#     environment:
+#       POSTGRES_USER: john
+#       POSTGRES_PASSWORD: secret
+#       POSTGRES_DB: smart-brain-docker
+#       POSTGRES_HOST: postgres
+#     image: postgres
+#     ports:
+#       - "5432:5432"
+
+# DATABASE POSTGRESQL
+# const db = knex({
+#     client: 'pg',
+#     connection: {
+#         host: process.env.POSTGRES_HOST,
+#         user: process.env.POSTGRES_USER,
+#         password: process.env.POSTGRES_PASSWORD,
+#         database: process.env.POSTGRES_DB
+#     }
+# });
+
+# so I have made some progress in this issue...
+
+# if you start up docker using: "docker-compose up -d" and then you check your "docker ps" ..... you will see you have two containers.... now if you log into the postgres container by "docker exec -it <containerID> bash" you will be logged into that container....
+
+# then I wanted to check if it was an issue with my localhost... by trying to log into the database like if we were login through our terminal... by using the following command inside the docker postgres bash:
+
+# psql postgres://sally:secret@postgres:5432/smart-brain-docker
+
+# which WORKED! so for sure it might be a localhost issue with your mac... I been reading and it said because we installed postgres sql using brew.... perhaps we are in the wrong port number...
+
+# I am assuming the app will work just fine but this will be the only way to check your tables if we can fix the local issue...
+
+# so I finally fixed it after 3 hours of going at it....
+
+# just restart your postgresql... Brew services restart postgresql  then go to your docker-compose.yml and change:
+
+# ports:
+#    - "5431:5432"
+
+# the number on the left side is your local computer and on the right side is your docker container....
+
+# make sure you do the following commands:
+
+# docker-compose down
+
+# docker-compose up --force-recreate
+
+# one your server and postgres is running go to your PSequel and enter your credentials and make sure to update your Port to 5431
+
+# That you get you in to your database that is now in docker.. I still have not figured out how to shut down or make available my localhost : 5432... as soon as I figure out I will post here!

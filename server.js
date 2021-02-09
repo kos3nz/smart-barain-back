@@ -1,9 +1,10 @@
+require('dotenv').config();
 const express = require('express');
 // const bodyParser = require('body-parser');
 const bcrypt = require('bcrypt-nodejs');
 const cors = require('cors');
 const knex = require('knex');
-require('dotenv').config();
+const morgan = require('morgan');
 
 const register = require('./controllers/register');
 const signin = require('./controllers/signin');
@@ -13,22 +14,27 @@ const image = require('./controllers/image');
 const db = knex({
   // connect to your own database here
   client: 'pg',
+  connection: process.env.POSTGRES_URI,
+  /*
   connection: {
-    host: '127.0.0.1',
-    user: '',
-    password: '',
-    database: 'smart-brain',
-  },
+    host: process.env.POSTGRES_HOST,
+    user: process.env.POSTGRES_USER,
+    password: process.env.POSTGRES_PASSWORD,
+    database: process.env.POSTGRES_DB,
+  }
+  */
 });
 
 const app = express();
 
+// console.log('still watching?');
 app.use(cors());
 app.use(express.json());
+app.use(morgan('combined'));
 // expressにbody-parserの機能が標準で搭載されたため, body-parserを使う必要がなくなった。 (body-parserを使うとdeprecatedの警告が出る)
 
 app.get('/', (req, res) => {
-  res.send(db.users);
+  res.send("It's working!");
 });
 app.post('/signin', signin.handleSignin(db, bcrypt));
 app.post('/register', (req, res) => {
